@@ -1,5 +1,9 @@
-#!/usr/bin/env python3
-"""pai-code - minimal pydantic-ai coding agent"""
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["pydantic_ai"]
+# ///
+"""clai-code - minimal pydantic-ai cli coding agent"""
 
 import os, re, glob as g, subprocess
 from pydantic_ai import Agent
@@ -8,7 +12,7 @@ agent = Agent(os.environ.get("MODEL", "anthropic:claude-sonnet-4-5"), instructio
 
 @agent.tool_plain(description="Read file with line numbers")
 def read(path: str, offset: int = 0, limit: int = 10000) -> str:
-    return "".join(f"{offset + i + 1:4}| {l}" for i, l in enumerate(open(path).readlines()[offset:offset + limit]))
+    return "".join(f"{offset + i + 1:4}| {l}" for i, l in enumerate(open(path).readlines()[offset : offset + limit]))
 
 @agent.tool_plain(description="Write content to file")
 def write(path: str, content: str) -> str:
@@ -39,5 +43,4 @@ def bash(cmd: str) -> str:
     r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
     return (r.stdout + r.stderr).strip() or "(empty)"
 
-if __name__ == "__main__":
-    agent.to_cli_sync(prog_name="pai-code")
+if __name__ == "__main__": agent.to_cli_sync(prog_name="clai-code")
