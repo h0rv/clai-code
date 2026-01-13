@@ -1,27 +1,18 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.11"
 # dependencies = ["pydantic_ai"]
 # ///
-"""clai-code - minimal pydantic-ai cli coding agent"""
 
-import os, re, glob as g, subprocess, functools
-from pydantic_ai import Agent
-from rich import print as rprint
+import os, re, glob as g, subprocess; from pydantic_ai import Agent; from rich import print as rprint
 
 agent = Agent(os.environ.get("MODEL", "anthropic:claude-sonnet-4-5"), instructions=f"Concise coding assistant. cwd: {os.getcwd()}")
 
 def tool(desc):
     def deco(fn):
-        @agent.tool_plain(description=desc)
-        @functools.wraps(fn)
         def wrap(*a, **kw):
-            arg = str(a[0] if a else next(iter(kw.values()), ''))[:50]
-            rprint(f"[green]⏺[/] [bold]{fn.__name__.capitalize()}[/]({arg})")
-            r = fn(*a, **kw)
-            rprint(f"[dim]  ⎿ {str(r).split(chr(10))[0][:60]}[/]")
-            return r
-        return wrap
+            rprint(f"[green]⏺[/] [bold]{fn.__name__.capitalize()}[/]({str(a[0] if a else next(iter(kw.values()), ''))[:50]})")
+            r = fn(*a, **kw); rprint(f"[dim]  ⎿ {str(r).split(chr(10))[0][:60]}[/]"); return r
+        return agent.tool_plain(description=desc)(wrap)
     return deco
 
 @tool("Read file with line numbers")
@@ -54,7 +45,6 @@ def grep(pattern: str, path: str = ".") -> str:
 
 @tool("Run shell command")
 def bash(cmd: str) -> str:
-    r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
-    return (r.stdout + r.stderr).strip() or "(empty)"
+    return ((r := subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)).stdout + r.stderr).strip() or "(empty)"
 
 if __name__ == "__main__": agent.to_cli_sync(prog_name="clai-code")
